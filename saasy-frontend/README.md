@@ -1,6 +1,6 @@
-# Gig Startup Reactor Frontend
+# SaaSy Frontend
 
-/Copyright 2019 Protos, LLC/
+_Copyright 2019 Protos, LLC_
 
 This is a React standalone app, to be used with perform-backend via GraphQL.
 
@@ -44,17 +44,3 @@ You will also see any lint errors in the console.
 Lots of work to be done here, still wip.
 
 ([running tests](https://facebook.github.io/create-react-app/docs/running-tests))
-
-## Deployment
-
-TBD.
-
-    npm run build
-
-Builds the app for production to the `build` folder.
-
-## TODO
-
-* Gamification - top bar showing how you are doing
-* consolidated UI bits - perhaps snowcoders.github.io, https://react.semantic-ui.com/
-   (I like but it's dated, react-menu-aim)
