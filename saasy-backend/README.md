@@ -83,7 +83,7 @@ The release process can be built locally with `./docker/release/build-local`, an
 
 The local container version of a release application runs as such:
 
-* There are three containers: one mariadb, one with the bare-bones release, and one in mix mode with source code imported into `/app/src` similar to the fullstack container.  Each are available for cross testing as needed.
+* There are three containers: one postfix, one with the bare-bones release, and one in mix mode with source code imported into `/app/src` similar to the fullstack container.  Each are available for cross testing as needed.
 * The profile exposes its port as 4001, so it can run concurrently with the `fullstack` version of the application.
 
 ### Testing
@@ -101,15 +101,11 @@ The local container version of a release application runs as such:
 You may want to work outside of docker, with a local database.  For MacOS you can do this by installing (requires homebrew):
 
     brew install elixir
-    brew install mariadb
+    brew install postfix
     mix local.hex --force
     mix local.rebar --force
 
-Add an alias in your `/etc/hosts` for the database: `db`, and start/stop/use mariadb as needed with:
-
-    mysql.server start
-    mysql.server stop
-    mysql -u root
+Add an alias in your `/etc/hosts` for the database: `db`
 
 Your mileage will vary with this setup.  You can cross-reference what is in the `fullstack` docker profile for more information on how to setup the app, if things are not working properly.
 
