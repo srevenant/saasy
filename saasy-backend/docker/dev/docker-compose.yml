@@ -1,0 +1,64 @@
+version: '3.3'
+services:
+  phx:
+    image: saasy-backend:dev
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+      args:
+        - MIX_ENV=dev
+    environment:
+      - MIX_ENV=dev
+      - GOOGLE_CLIENT_ID=528833200875-4ec9c5r2op5u59td53je8qk7o7i1c26b.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=_B5hLWFbMDYTGs8yzrTvfi7T
+      - DATABASE_HOST=db
+      - DATABASE_NAME=saasy-backend_prod
+      - DATABASE_USER=root
+      - DATABASE_PASS=
+    volumes:
+      - ~/.bashrc:/root/.bashrc:ro
+      - ~/.reflex:/root/.reflex:ro
+      - ../../src:/app/src
+      - ../../docker/dev:/docker
+      - ../../data:/data/
+      - build:/app/src/_build
+      - deps:/app/src/deps
+    depends_on:
+      - db
+      #      - neo4j
+    ports:
+      - target: 4000
+        published: 4000
+        protocol: tcp
+        mode: host
+  # db:
+  #   image: mariadb
+  #   volumes:
+  #     - mydata:/var/lib/mysql
+  #     - ../../data:/data/
+  #   environment:
+  #     - MYSQL_ALLOW_EMPTY_PASSWORD=true
+  #   ports:
+  #     - "13306:3306"
+
+  db:
+    image: postgres
+    volumes:
+      - saasy-data:/var/lib/postgresql/data
+    ports:
+      - "5432"
+
+  # neo4j:
+  #   image: neo4j
+  #   volumes:
+  #     - neodata:/data
+  #   environment:
+  #     - MYSQL_ALLOW_EMPTY_PASSWORD=true
+  #   ports:
+  #     - "77474:7474"
+  #     - "77687:7687"
+volumes:
+  saasy-data:
+  mydata:
+  build:
+  deps:

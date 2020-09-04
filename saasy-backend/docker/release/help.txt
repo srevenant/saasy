@@ -1,0 +1,20 @@
+   # start a shell, like 'iex -S mix'
+   ./bin/reactor console
+
+   # start in the foreground, like 'mix run --no-halt'
+   ./bin/reactor foreground
+
+   # start in the background, must be stopped with the 'stop' command
+   ./bin/reactor start
+
+If you started a release elsewhere, and wish to connect to it:
+
+   # connects a local shell to the running node
+   ./bin/reactor remote_console
+
+   # connects directly to the running node's console
+   ./bin/reactor attach
+
+For a complete listing of commands and their use:
+
+   ./bin/reactor help

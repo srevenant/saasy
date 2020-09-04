@@ -1,0 +1,9 @@
+.uploader {
+  label {
+    text-transform: none;
+    font-size: inherit;
+  }
+  input[type='file'] {
+    display: none;
+  }
+}

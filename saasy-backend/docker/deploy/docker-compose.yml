@@ -1,0 +1,31 @@
+version: '3.3'
+services:
+  phx:
+    image: saasy-backend:prd
+    build:
+      context: ../..
+      dockerfile: docker/deploy/Dockerfile
+      args:
+        - MIX_ENV=prod
+    environment:
+      - PYTHONUNBUFFERED=true
+      - MIX_ENV=prod
+      - GOOGLE_CLIENT_ID=528833200875-4ec9c5r2op5u59td53je8qk7o7i1c26b.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=_B5hLWFbMDYTGs8yzrTvfi7T
+      - DATABASE_HOST=db
+      - DATABASE_NAME=saasy-backend_prod
+      - DATABASE_USER=root
+      - DATABASE_PASS=
+    ports:
+      - target: 4010
+        published: 4010
+        protocol: tcp
+        mode: host
+    links:
+      - db
+
+  db:
+    image: mariadb
+    environment:
+      - MYSQL_DATABASE=engine
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true

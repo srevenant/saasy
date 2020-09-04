@@ -1,0 +1,14 @@
+.rb {
+  padding: 0.25rem 0.5rem 0.25rem 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+}
+.cols {
+  .rb {
+    display: block;
+    &:not(.active) {
+      border-color: transparent !important;
+    }
+  }
+}

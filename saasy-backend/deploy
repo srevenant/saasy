@@ -1,0 +1,193 @@
+#!/bin/bash
+
+# NOTES:
+# * uses base level nginx on $remote
+#   - create folder at : /app/web/{domain}
+#   - create domain entry in nginx configs
+# * doesn't create the service on $remote, you still need to copy it up and create
+#   scp docker/release/docker-swarm-${svcname}.yml $remote:
+#   ssh $remote
+#   docker stack deploy -c docker-swarm-${svcname}.yml ${svcname}-backend
+# * initialize DB by bringing up migration service
+# * config: Currently it's BAD, static stored at docker/release/config.json
+
+AWS_PROFILE=protos
+AWS_REGION=us-west-2
+s3cfg=~/.s3cfg
+domain=saasy.com
+svcname=saasy
+remote=aws1
+ecr=756524184473.dkr.ecr.us-west-2.amazonaws.com
+# this should come in from a build service (jenkins/etc)
+BUILD=$(date +%Y%m%d%H%M)
+
+owd=$(pwd)
+
+# scheme is s3 or rsync
+#prod_frontend_dst=s3://bucketname
+prod_frontend_scheme=rsync
+prod_frontend_dst=$remote:/app/web/${domain}/live/.
+prod_appserver=https://saasy.com
+prod_lane=p
+
+test_frontend_scheme=rsync
+test_frontend_dst=$remote:/app/web/${domain}/test/.
+test_appserver=https://t.saasy.com
+test_lane=t
+
+swarmfile="docker-swarm-${svcname}.yml"
+backend_img=${svcname}-backend
+frontend_img=${svcname}-frontend
+migration_img=${svcname}-migration
+while [ $(basename $owd) = $backend_img -a "$owd" != "/" -a "$owd" != "." ]; do
+    owd=$(dirname $owd)
+done
+cd $owd || exit
+ecr_login=$(aws ecr get-login --no-include-email --profile $AWS_PROFILE --region $AWS_REGION)
+
+cmd() {
+  echo ">>>"
+  echo ">>> $@"
+  echo ">>>"
+  "$@"
+}
+
+push_with_rsync() {
+  local dst=$1
+  cmd rsync -va --delete ./ $dst
+}
+push_with_s3() {
+  local dst=$1
+  cmd s3cmd sync --exclude='*-unsplash.*' --exclude '*.xcf' -v -r .\
+       $dst -c $s3cfg --acl-grant 'read:*'
+  # fix --delete-removed later
+}
+
+deploy_frontend() {
+  local act="$1"
+  cd $owd/${svcname}-frontend && {
+    if [ "$act" != "push" ]; then
+      conf=src/constants/config.js
+      cp $conf $conf.orig
+      local appserver=${ENV}_appserver
+      local lane=${ENV}_lane
+      trap "mv $conf.orig $conf; exit 1" 0 1 15
+      sed -e 's!build: .*@BUILD@!build: "'${BUILD}'",!' $conf.orig |\
+        sed -e 's!lane: .*@LANE@!lane: "'${!lane}'",!' |\
+        sed -e 's!baseurl: .*@APP@!baseurl: "'${!appserver}'",!' > $conf
+      yarn run build && {
+        if [ -f $conf.orig ]; then
+          mv $conf.orig $conf
+          trap "" 0 1 15
+        fi
+      } && deploy_frontend_push
+    else
+      deploy_frontend_push
+    fi
+  }
+}
+
+deploy_frontend_push() {
+  cd build && {
+    local scheme=${ENV}_frontend_scheme
+    local dst=${ENV}_frontend_dst
+    cmd push_with_${!scheme} ${!dst}
+  }
+}
+
+deploy_migration() {
+  cd $owd/${svcname}-backend && {
+    $ecr_login &&
+      ./docker/migration/build-local $BUILD &&
+      cmd docker tag $migration_img:$BUILD $ecr/$migration_img:latest &&
+      cmd docker push $ecr/$migration_img:latest
+      scp docker/release/$swarmfile $remote: && {
+        trap "rm -f $$.tmpsh; exit 1" 0 1 15
+        cat > $$.tmpsh <<END
+#!/bin/bash
+
+cmd() {
+  echo ">>>"
+  echo ">>> \$@"
+  echo ">>>"
+  "\$@"
+  return \$?
+}
+$ecr_login &&
+  cmd docker pull $ecr/${migration_img}:latest &&
+  cmd docker stack deploy -c docker-swarm-saasy.yml $backend_img
+
+printf "NOT DOING:\n\n docker service update --force ${backend_img}_migration\n\n"
+END
+        scp $$.tmpsh $remote: &&
+        ssh -t -t $remote "sudo -s bash ./$$.tmpsh && rm -f $$.tmpsh"
+        rm -f $$.tmpsh
+        trap "" 0 1 15
+      }
+  }
+}
+
+deploy_backend() {
+  cd $owd/${svcname}-backend && {
+    $(aws ecr get-login --no-include-email --profile $AWS_PROFILE --region=$AWS_REGION) &&
+      cmd ./docker/release/build-local $BUILD &&
+      cmd docker tag $backend_img:$BUILD $ecr/$backend_img:latest &&
+      cmd docker push $ecr/$backend_img:latest &&
+      scp docker/release/$swarmfile $remote: && {
+        trap "rm -f $$.tmpsh; exit 1" 0 1 15
+        cat > $$.tmpsh <<END
+#!/bin/bash
+
+cmd() {
+  echo ">>>"
+  echo ">>> \$@"
+  echo ">>>"
+  "\$@"
+  return \$?
+}
+$ecr_login &&
+  cmd docker pull 756524184473.dkr.ecr.us-west-2.amazonaws.com/$backend_img:latest &&
+  cmd docker stack deploy -c docker-swarm-${svcname}.yml $backend_img &&
+  cmd docker service update --force ${backend_img}_phx
+END
+        scp $$.tmpsh $remote: &&
+        ssh -t -t $remote "sudo -s bash ./$$.tmpsh && rm -f $$.tmpsh && docker service logs --since 2m -f ${backend_img}_phx"
+        rm -f $$.tmpsh
+        trap "" 0 1 15
+      }
+  }
+}
+
+{
+  syntax() {
+    echo "try: $0 {test|prod} {backend|frontend|migration|all}"
+    exit 1
+  }
+  case "$1" in
+    prod|production)
+      export ENV=prod ;;
+    test|tst)
+      export ENV=test ;;
+    *)
+      syntax ;;
+  esac
+
+  shift
+
+  cd $owd && source .s3keys
+
+  case "$1" in
+    back|backend)
+      deploy_backend ;;
+    front|frontend)
+      deploy_frontend ;;
+    migration|mig|migrate)
+      deploy_migration ;;
+    all)
+      deploy_frontend &&
+      deploy_migration &&
+      deploy_backend ;;
+    *)
+      syntax ;;
+  esac
+}

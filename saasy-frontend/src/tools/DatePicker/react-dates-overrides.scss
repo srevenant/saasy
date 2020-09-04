@@ -1,0 +1,44 @@
+.SingleDatePickerInput {
+  border: none;
+}
+.DateInput_input {
+  border: solid 1px var(--tc-moon-gray);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  margin: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
+}
+.error .DateInput_input {
+  border-color: var(--tc-red);
+}
+
+.filters {
+  .DateRangePickerInput {
+    width: 18rem;
+  }
+  .DateInput {
+    width: 7rem;
+  }
+  .DateInput_input {
+    padding: 0.5rem;
+    margin: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+    border: none;
+    // border: solid 1px red;
+    background-color: transparent;
+    width: 7rem;
+  }
+  #rangeStartDate {
+    text-align: right;
+  }
+  .error .DateInput_input {
+    border: none;
+  }
+}

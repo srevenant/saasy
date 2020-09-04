@@ -1,0 +1,59 @@
+#!/bin/bash
+
+{ # all is loaded at once
+  export LOCAL_HUSH=true # quiet `./local` a little
+
+  composefile=docker/test-ci/docker-compose.yml
+  pname=$(./local getpname test-ci) # for consistency
+
+
+  trap "./local kill test-ci; ./local rm test-ci -f >/dev/null 2>&1 &" 0 1 2 3 14 15
+
+  banner() {
+    echo ""
+    echo "################################################################################"
+    echo "## $(date) ## $@"
+    echo "################################################################################"
+  }
+
+  banner "Cleanup prior run (if any)"
+  ./local kill test-ci
+  ./local rm test-ci -f
+
+  cmd() {
+    echo ""
+    echo ">>> $@"
+    echo ""
+    "$@" || {
+      if [ $NO_ABORT_FAIL ]; then
+        return 1
+      fi
+      echo "FAILED // ABORTING"
+      exit 1
+    }
+    return 0
+  }
+  dcompose() {
+    cmd docker-compose -p $pname -f $composefile "$@"
+  }
+
+  banner "Build container(s)"
+  cmd ./docker/base/build 
+  cmd ./local build test-ci
+  banner "Startup container(s)"
+  dcompose up -d
+
+  while ! NO_ABORT_FAIL=1 dcompose ps db; do #  > /dev/null 2>&1; do
+    sleep 1
+    echo "Waiting for db container..."
+  done
+  echo done
+
+  ## I don't know if we should do this, or if we should use mix ecto.create/db migrate instead
+  ## The db is created externally currently -BJG
+  banner "Prepare database"
+  dcompose exec -T db /bin/bash -c '/data/setup-db.sh bluesun</dev/null' || exit 1
+  banner "Run tests"
+  dcompose run phx
+  exit $?
+}

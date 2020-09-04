@@ -1,0 +1,56 @@
+defmodule Core.SettingTest do
+  use Core.Case, async: true
+  alias Core.Model.Settings
+  alias Core.Model.Setting
+
+  doctest Core.Model.Settings
+  doctest Core.Model.Setting
+
+  describe "build/1" do
+    test "build when valid" do
+      params = params_for(:setting)
+      changeset = Setting.build(params)
+      assert changeset.valid?
+    end
+  end
+
+  test "factory" do
+    assert %Setting{} = setting = insert(:setting)
+    assert setting.id != nil
+  end
+
+  describe "one/1" do
+    test "receive setting" do
+      c = insert(:setting)
+      assert %Setting{} = found = Settings.one!(id: c.id)
+      assert found.id == c.id
+    end
+  end
+
+  describe "create/1" do
+    test "inserts a valid record" do
+      attrs = params_for(:setting)
+      assert {:ok, setting} = Settings.create(attrs)
+      assert setting.id != nil
+    end
+
+    test "does not allow duplicate record" do
+      attrs = params_for(:setting)
+      assert {:ok, setting} = Settings.create(attrs)
+      assert {:error, changeset} = Settings.create(attrs)
+      assert {"has already been taken", _} = Keyword.get(changeset.errors, :name)
+    end
+  end
+
+  # other ideas:
+  # - changing name of setting (ok)
+  # - changing tenant (not ok)
+
+  describe "delete/1" do
+    test "deletes record" do
+      setting = insert(:setting)
+      assert {:ok, deleted} = Settings.delete(setting)
+      assert deleted.id == setting.id
+    end
+  end
+end

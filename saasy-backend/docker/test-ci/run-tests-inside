@@ -1,0 +1,10 @@
+#!/bin/bash
+
+mix format --check-formatted || exit 1
+mix do ecto.setup, ecto.migrate || exit 1
+
+if [ $SEED_DB ]; then
+    mix core.seed_contacts
+fi
+
+exec mix test

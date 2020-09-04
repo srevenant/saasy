@@ -1,0 +1,4 @@
+defmodule Core.Model.SettingSchemes do
+  use Core.Context
+  use Core.Model.CollectionUuid, model: SettingScheme
+end

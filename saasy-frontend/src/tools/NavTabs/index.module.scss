@@ -1,0 +1,17 @@
+.tabs {
+  border: none;
+  width: 100%;
+
+  .tab,
+  button.tab {
+    margin: 0;
+    text-align: center;
+    border-width: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline;
+    font-weight: bold;
+    outline: 0;
+    text-transform: uppercase;
+  }
+}

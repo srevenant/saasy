@@ -1,0 +1,46 @@
+defmodule Core.DupTemplateTest do
+  use Core.Case, async: true
+  use Core.ContextClient
+
+  doctest DupTemplate, import: true
+  doctest DupTemplates, import: true
+
+  describe "factory" do
+    test "factory creates a valid instance" do
+      assert %DupTemplate{} = dup_template = insert(:dup_template)
+      assert dup_template.id != nil
+    end
+  end
+
+  describe "build/1" do
+    test "build when valid" do
+      params = params_for(:dup_template)
+      changeset = DupTemplate.build(params)
+      assert changeset.valid?
+    end
+  end
+
+  describe "get/1" do
+    test "loads saved transactions as expected" do
+      c = insert(:dup_template)
+      assert %DupTemplate{} = found = DupTemplates.one!(id: c.id)
+      assert found.id == c.id
+    end
+  end
+
+  describe "create/1" do
+    test "inserts a valid record" do
+      attrs = params_for(:dup_template)
+      assert {:ok, dup_template} = DupTemplates.create(attrs)
+      assert dup_template.id != nil
+    end
+  end
+
+  describe "delete/1" do
+    test "deletes record" do
+      dup_template = insert(:dup_template)
+      assert {:ok, deleted} = DupTemplates.delete(dup_template)
+      assert deleted.id == dup_template.id
+    end
+  end
+end

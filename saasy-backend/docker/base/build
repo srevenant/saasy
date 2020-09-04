@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# note: Ideally this would use a label other than :latest for building
+# on jenkins/prod vs local dev.  Future task - BJG
+
+remote=$1
+
+echo "--- docker/base/build"
+cmd() {
+  echo ">>>"
+  echo ">>> $@"
+  echo ">>>"
+  "$@"
+}
+
+basedir=$(cd $(dirname $0); pwd)
+project=$(basename $(dirname $(dirname $basedir)))
+name=$project-base
+if [ $remote ]; then
+    name=$remote/$name
+  	docker pull $name
+fi
+
+cmd cd docker/base
+
+cmd docker build -t $name . || exit 1
+
+if [ $remote ]; then
+    cmd docker push $name
+fi
+
+exit 0

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+email=$1
+domain=$2
+if [ "$email" = "" ]; then
+    echo "Syntax: $0 {admin-email} {site}"
+    echo "- {site} is either prod/dev or a hostname"
+    exit 1
+fi
+
+case $domain in
+  dev)
+    domain="localhost"
+    ;;
+  prod)
+    domain="app.gigstartup.xyz"
+    ;;
+esac
+
+if [ "$domain" = "localhost" ]; then
+  path="../data"
+elif [ "$domain" = "app.gigstartup.xyz" ]; then
+  path="/data"
+elif [ "$domain" = "" ]; then
+  echo "Oops, missing domain"
+  exit 1
+fi
+
+output=$(
+  mix compile &&
+  mix ecto.reset &&
+  mix core.tenant add $domain $email
+)
+
+status=$?
+echo "$output"
+if [ $status -gt 0 ]; then
+    exit $status
+fi
+
+userId=$(echo "$output" | grep userId= | sed -e 's/^.*userId=\(.*\)$/\1/')
+
+mix core.tenant list-users
+
+mix core.seeds topic-schema=${path}/seed.topic-schema.json
+mix core.data load Topics=${path}/data.topics.json owner=${userId}
+
+mix core.seeds journeys=${userId}@${path}/seed.product-rubric.json
+mix core.seeds journeys=${userId}@${path}/seed.innovator-rubric.json
+
+printf "\n\nexport DEV_AUTH_USER_ID=$userId\n\n"

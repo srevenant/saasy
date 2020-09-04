@@ -1,0 +1,34 @@
+version: '3.3'
+services:
+  phx:
+    image: 756524184473.dkr.ecr.us-west-2.amazonaws.com/saasy-backend:latest
+    ports:
+    - target: 4000
+      published: 4015
+      protocol: tcp
+      mode: host
+
+  migration:
+    image: 756524184473.dkr.ecr.us-west-2.amazonaws.com/saasy-migration:latest
+    volumes:
+      - type: bind
+        source: /migration
+        target: /migration
+    deploy:
+      replicas: 0
+
+  db:
+    image: postgres
+    volumes:
+      - saasy-data:/var/lib/postgresql/data
+      - type: bind
+        source: /data/migrate/saasy
+        target: /migrate
+    ports:
+    - target: 5432
+      published: 6003
+      protocol: tcp
+      mode: host
+
+volumes:
+  saasy-data:

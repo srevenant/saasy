@@ -1,0 +1,67 @@
+defmodule Core.Model.Setting do
+  @moduledoc """
+  Schema for representing and working with a Setting.
+  """
+  use Ecto.Schema
+  @timestamps_opts [type: :utc_datetime]
+  alias Core.Model.SettingSchemes
+  import Ecto.Changeset
+  use Core.ContextClient
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+
+  schema "saasy_settings" do
+    belongs_to(:tenant, Tenant, type: :binary_id, foreign_key: :tenant_id)
+    field(:scope, :string)
+    field(:name, :string)
+    field(:value, :string)
+    timestamps()
+  end
+
+  @required_fields [:tenant_id, :scope, :name]
+  @update_allowed_fields [:value]
+  @create_allowed_fields @required_fields ++ @update_allowed_fields
+
+  def validate(changeset) do
+    changeset
+    |> validate_required(@required_fields)
+    |> unique_constraint(:name, name: :tenant_setting_name)
+    |> validate_format(:name, ~r/^[a-z0-9\?\.-]+$/i)
+    |> validate_scheme
+  end
+
+  def validate_scheme(
+        %Ecto.Changeset{valid?: true, changes: %{scope: scope, name: name}} = changeset
+      ) do
+    case SettingSchemes.one(scope: scope, name: name) do
+      {:ok, _scheme} ->
+        changeset
+
+      {:error, _reason} ->
+        changeset |> add_error(:scheme, "setting is not defined as a scheme")
+    end
+  end
+
+  def validate_scheme(%Ecto.Changeset{valid?: false} = changeset), do: changeset
+
+  @doc """
+  Build a changeset for creating.
+  """
+  def build(params \\ %{}) do
+    %__MODULE__{}
+    |> cast(params, @create_allowed_fields)
+    |> validate
+  end
+
+  @doc """
+  Changeset for performing updates.
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, @update_allowed_fields)
+    |> validate
+  end
+
+  use Core.Model.CollectionModel
+end

@@ -1,0 +1,20 @@
+.pop {
+  position: absolute;
+  top: 15%;
+  left: 25%;
+  right: 25%;
+  width: 50%;
+  border: solid 2px var(--t-gray);
+  font-weight: bold;
+  margin-left: auto;
+  margin-right: auto;
+  height: 12rem;
+  background-color: var(--t-transbg-overlay);
+  color: var(--t-primary);
+  padding: 0.5rem;
+  .close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0;
+  }
+}

@@ -1,0 +1,39 @@
+defmodule Core.UsageTest do
+  use Core.Case, async: true
+  alias Core.Model.Usages
+  alias Core.Model.Usage
+
+  doctest(Core.Model.Usages, import: true)
+  doctest(Core.Model.Usage, import: true)
+
+  describe "factory" do
+    test "factory creates a usage" do
+      assert %Usage{} = usage = insert(:usage)
+      assert usage.id != nil
+    end
+  end
+
+  describe "build/1" do
+    test "build when valid" do
+      params = params_for(:usage)
+      changeset = Usage.build(params)
+      assert changeset.valid?
+    end
+  end
+
+  describe "get/1" do
+    test "receive usage" do
+      c = insert(:usage)
+      assert %Usage{} = found = Usages.one!(id: c.id)
+      assert found.id == c.id
+    end
+  end
+
+  describe "create/1" do
+    test "inserts a valid record" do
+      attrs = params_for(:usage)
+      assert {:ok, usage} = Usages.create(attrs)
+      assert usage.id != nil
+    end
+  end
+end

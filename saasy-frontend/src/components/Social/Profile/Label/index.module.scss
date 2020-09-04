@@ -1,0 +1,121 @@
+.person {
+  position: relative;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  display: flex;
+  align-items: center;
+}
+.name {
+  font-weight: 400;
+}
+.handle,
+.time {
+  font-weight: 300;
+  font-size: 10pt;
+}
+.desc,
+.types,
+.skills,
+.roles,
+.icon,
+.name,
+.handle,
+.time {
+  padding-left: 0.5rem;
+}
+.desc,
+.types,
+.skills,
+.roles,
+.services {
+  font-size: 10pt;
+}
+.desc {
+  font-weight: 300;
+}
+.icon {
+  &.floatEdit {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: auto;
+    margin-right: 0.25rem;
+    padding-left: 0.5rem;
+  }
+}
+.person {
+  &:not(:hover) {
+    .icon,
+    .icon i {
+      color: transparent;
+    }
+  }
+}
+
+.desc,
+.types,
+.skills,
+.roles,
+.services,
+.name,
+.handle,
+.time {
+  // border: solid 1px red;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2rem 2.5rem auto;
+  grid-row-gap: 0.5rem;
+
+  .desc,
+  .types,
+  .skills,
+  .roles,
+  .services,
+  .name,
+  .handle,
+  .time {
+    display: flex;
+    align-items: center;
+  }
+
+  .time {
+    justify-content: flex-end;
+  }
+  .desc,
+  .types,
+  .skills,
+  .roles,
+  .services {
+    font-weight: inherit;
+  }
+  .image {
+    grid-column: 1;
+  }
+  .time {
+    grid-column: 2;
+  }
+  .name {
+    grid-column: 3;
+  }
+  .handle {
+    grid-column: 4;
+  }
+  .desc {
+    grid-column: 5;
+  }
+  .types {
+    grid-column: 6;
+  }
+  .roles {
+    grid-column: 7;
+  }
+  .skills {
+    grid-column: 8;
+  }
+  .services {
+    grid-column: 9;
+  }
+}

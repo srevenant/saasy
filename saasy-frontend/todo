@@ -1,0 +1,68 @@
+(also ../todo)
+
+- add market tags to project seed generation
+
+*** PITCH - (pitches & downloads) -- create & pivot off pitch records with file uploads, instead of "project files"
+  - add "needs" onto pitches -- needs review, assistance, etc
+  - don't include path in file download data (security through obscurity)
+    (download path comes after click & then are redirected)
+    (consider tying stage+pitch together)
+
+*** COMMENTS - comments on projects/pitches
+  - etc are all done reddit style with up/down voting
+  - mark post type: constrictive, observation, etc.  As you post gamification kicks in (but not on just ranking)
+    - receiver can ack back -- marking that they felt the feedback was helpful (or not)
+  - Feedback/comments & posts (post on projects, comment/feedback on posts)
+  - post updates to project (press releases, etc)--appear on feed
+
+*** RANKING rankings, karma, etc
+   - figure out universal +/- that can be pinned to many things
+
+*** PROFILE
+  - results list -- not past work, but past results / outcomes
+  - shift so skills is the same lookup table for both what I'm good at and what I'm learning
+  - Set unique index on user_tags  type+label
+  - have tag insertion do a replace_into
+
+*** PROJECT
+  - market - tags from DB (migrate profile_tags to tags?)
+  - updates/discussion (posts on project)
+  - member locations mapped to project:  Utah(1), California(3) etc
+
+  - corporate sponsor links per project
+  - what we did/doing/next
+~ - improvements to search results page -- table/tile option?
+  - find similar companies/products and link << or in journey sufficient >>
+
+*** FEED - future "feed" as home - it's the default.  Includes a blend of updated projects, etc.
+  - nav links: {home is feed}, {about}  {events?}  {studio? -- self}
+
+  - feed includes:
+    - update posts associated with a project
+    - projects as they are updated (or trending)
+    - pitches as posted on projects
+    - ad-hoc posts?  Don't know.... best if tied to project
+
+
+*** smart city challenge - home-AI which can control access to your home, safely, easily, and securely
+
+*** random thoughts / possible things
+
+  - possibly: tile-like view for feed where 1x1 is free and if you want you can
+    pay to have yours 1x2 or 2x2
+
+  - on question: don't show completed checkbox until at least one word is in box
+    (eventually) show links to discussions
+
+  - home-page snapshots of app functionality (no need for demo projects then)
+    - videos maybe too
+
+  - user admin b0rk
+
+  - follow, like, etc
+  - corporate type entities/signins/members - link to corporate profile instead of member
+  - "If you aren't listed, your missing out."
+  - change user/project address -> location
+  - `store/` resolver changes for user to punt through profile resolver ?
+  - cannot leave project by yourself -- must ask admin (fix this later)
+  - <NotSignedIn/> - put in examples & link back to home content showing what's avialbale there

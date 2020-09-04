@@ -1,0 +1,273 @@
+defmodule WebSvc.AuthXControllerTest do
+  use WebSvc.ConnCase
+  use Core.ContextClient
+  import ExUnit.CaptureLog
+  # use Core.TestDefinitions
+  import WebSvc.TestSupportAuth
+  #  alias WebSvc.Router.Helpers, as: Routes
+
+  ##############################################################################
+  setup _ do
+    {:ok, params = %{host: host}} = test_tenant_user()
+
+    conn =
+      Phoenix.ConnTest.build_conn()
+      |> Plug.Conn.put_req_header("host", host)
+
+    {:ok, Map.put(params, :conn, conn)}
+  end
+
+  def http_get(conn, status: status) do
+    result = get(conn, auth_x_path(WebSvc.Endpoint, :access), "{}")
+    assert result.status == status
+    result
+  end
+
+  def http_get(conn, status: status, body: body) do
+    result = http_get(conn, status: status)
+    assert String.contains?(result.resp_body, body)
+    result
+  end
+
+  def http_get(conn, status: status, body: body, log: log) do
+    assert capture_log(fn ->
+             http_get(conn, status: status, body: body)
+           end) =~ log
+  end
+
+  def http_post_refresh(conn, %{
+        token: token,
+        endpoint: endpoint,
+        status: status,
+        log: log,
+        result: _result
+        # TODO^
+      }) do
+    assert capture_log(fn ->
+             http_post_refresh(conn, %{token: token, endpoint: endpoint, status: status})
+           end) =~ log
+  end
+
+  def http_post_refresh(conn, %{token: token, endpoint: endpoint, status: status}) do
+    result =
+      conn
+      |> post(auth_x_path(WebSvc.Endpoint, endpoint), %{client_assertion: token})
+
+    assert result.status == status
+    json_response(result, status)
+  end
+
+  # TODO: Note: this only tests with Auth.Signin.Local, as that is the default
+  # Testing other schemas configured by an app_setting are more challenging
+  # within this model test, as it will adversely effect other tests running in
+  # parallel. Need to consider ways to do this without creating security holes,
+  # likely just using the multitenant type configuration (so the schema can be
+  # based on the `Host:` definition -BJG
+  describe "POST ../auth/v1/api/signin" do
+    test "real current user", %{conn: conn, host: host} do
+      # w/hash
+      tenant = Tenants.one!(code: host)
+      user = insert(:user, tenant_id: tenant.id, tenant: tenant)
+      factor = insert(:hashpass_factor, user: user)
+      handle = insert(:handle, user: user)
+      user = %User{user | handle: handle}
+
+      result =
+        conn
+        |> post(auth_x_path(WebSvc.Endpoint, :signin), %{
+          "username" => user.handle.handle,
+          "password" => factor.password
+        })
+
+      data = json_response(result, 200)
+      assert data["aud"] =~ ~r/^caa1:ref:/
+      assert data["sec"] =~ ~r/[a-z0-9]+/
+      assert data["sub"] =~ ~r/^cas2:/
+    end
+
+    test "real current user, bad password", %{conn: conn, host: host} do
+      tenant = Tenants.one!(code: host)
+      user = insert(:user, tenant_id: tenant.id, tenant: tenant)
+      insert(:hashpass_factor, user: user)
+      handle = insert(:handle, user: user)
+      user = %User{user | handle: handle}
+
+      assert capture_log(fn ->
+               result =
+                 conn
+                 |> post(auth_x_path(WebSvc.Endpoint, :signin), %{
+                   "username" => user.handle.handle,
+                   "password" => "not this password"
+                 })
+
+               assert result.status == 403
+             end) =~ "Invalid Password"
+    end
+
+    test "bad username", %{conn: conn} do
+      assert capture_log(fn ->
+               result =
+                 conn
+                 |> post(auth_x_path(WebSvc.Endpoint, :signin), %{
+                   "username" => "The Time Lord",
+                   "password" => "The Tardis"
+                 })
+
+               assert result.status == 403
+             end) =~ "User missing for tenant"
+    end
+  end
+
+  describe "POST ../auth/v1/api/refresh" do
+    test "new access token", %{conn: conn, user: user} do
+      assert %{"access_token" => token} =
+               http_post_refresh(conn, %{
+                 token: AuthX.Token.Requests.refresh_token!(user, %{}, :user, -1),
+                 endpoint: :refresh,
+                 status: 200
+               })
+    end
+
+    test "refresh token expired", %{conn: conn, user: user} do
+      http_post_refresh(conn, %{
+        token: AuthX.Token.Requests.refresh_token!(user, %{}, :user, 10),
+        endpoint: :refresh,
+        status: 403,
+        log: "Token expiration out of bounds"
+      })
+    end
+
+    test "invalid refresh token", %{conn: conn, user: user} do
+      http_post_refresh(conn, %{
+        token: AuthX.Token.Requests.refresh_token!(user, %{}, :user, -1) <> "tamper",
+        endpoint: :refresh,
+        status: 403,
+        log: "Unable to verify refresh token"
+      })
+    end
+  end
+
+  # TODO: Tests to add (<*> - these need a different create)
+  #  valid_token()
+  #  - "Invalid authorization token" - invalid or mangled JWT <*>
+  #  - "Token secret does not match" - secret doesn't work <*>
+  #  valid_audience()
+  #  - "Invalid token.aud type: ..." <*>
+  #  - "Cannot parse token.aud..." <*>
+  #  lookup_subject()
+  #  - cas2: "Invalid token.sub" -- need to merge this w/validation code
+  #  set_auth_context()
+  #  - Cannot find user
+  #  - Indirect id unsupported
+  #  - Unrecognized auth type ...
+  describe "auth tests" do
+    # test "User Access (acc) - good", %{conn: conn, vfactor: factor} do
+    #  headers_for_api(conn, factor)
+    #  |> http_get(status: 200, body: "ok")
+    # end
+
+    test "User Access (acc) - no header errors properly", %{
+      conn: conn,
+      vuser: user
+    } do
+      # cas1:#{factor.id}", 10 * 60, user.tenant.code, :acc)
+      headers_for_api(conn, "bogun", 10 * 60, user.tenant.code, :acc)
+      |> delete_req_header("authorization")
+      |> http_get(status: 403, body: "unauthorized", log: "No authorization header")
+    end
+
+    test "User Access (acc) - mangled header errors properly", %{
+      conn: conn,
+      vuser: user
+    } do
+      # cas1:#{factor.id}", 10 * 60, user.tenant.code, :acc)
+      headers_for_api(conn, "bogun", 10 * 60, user.tenant.code, :acc)
+      |> put_req_header("authorization", "bad wolf")
+      |> http_get(status: 403, body: "unauthorized", log: "Badly formatted auth header")
+    end
+
+    # valid audience
+    # TODO: allow header to take a bad subject
+    #      headers_for_api(conn, "cas1:#{factor.id}", 10 * 60, user.tenant.code, "nope")
+    #      |> http_get(status: 403, body: "unauthorized", log: "Cannot parse token.sub")
+
+    test "User Access (acc) - invalid subject errors properly", %{conn: conn, vuser: user} do
+      headers_for_api(conn, "bad subject", 10 * 60, user.tenant.code, :acc)
+      |> http_get(status: 403, body: "unauthorized", log: "Cannot parse token.sub")
+    end
+
+    test "User Access (acc) - invalid subject ID errors properly", %{
+      conn: conn,
+      vuser: user
+    } do
+      headers_for_api(conn, "cas1:303030303", 10 * 60, user.tenant.code, :acc)
+      |> http_get(
+        status: 403,
+        body: "{\"error\": \"unauthorized\"}",
+        log: "303030303"
+      )
+    end
+
+    test "User Access (acc) - token is too old", %{conn: conn, vfactor: factor, vuser: user} do
+      headers_for_api(conn, "cas1:#{factor.id}", 16 * 60, user.tenant.code, :acc)
+      |> http_get(
+        status: 403,
+        body: "{\"error\": \"unauthorized\"}",
+        log: "Token expiration out of bounds"
+      )
+    end
+
+    test "User Access (acc) - user across tenant", %{conn: conn} do
+      assert {:ok, user} = Users.preload(insert(:user), [:tenant, :factors])
+      assert {:ok, factors} = Factors.all(user_id: user.id)
+
+      headers_for_api(conn, "cas1:#{user.id}", 60, user.tenant.code, :acc)
+      |> http_get(
+        status: 403,
+        body: "{\"error\": \"unauthorized\"}",
+        log: "Cannot find identity factor"
+      )
+    end
+
+    def get_cxs_auth_id(val) when is_list(val) do
+      # I know there is a better syntax for this -BJG
+      {key, _} = Enum.at(AuthX.Settings.getcfg(:auth_cxs_allowed), 0)
+      key
+    end
+
+    def get_cxs_auth_id(map) when is_map(map) do
+      get_cxs_auth_id(Map.to_list(map))
+    end
+
+    test "Cross Service Direct (cxs)", %{conn: conn, user: user} do
+      cxsid = AuthX.Settings.getcfg(:auth_cxs_allowed) |> get_cxs_auth_id
+      max_exp = AuthX.Settings.expire_limit(:cxs)
+
+      headers_for_api(conn, "cas1:#{cxsid}", max_exp - 10, user.tenant.code, :cxs)
+      |> http_get(status: 200, body: "ok")
+
+      headers_for_api(conn, "cas1:#{cxsid}", max_exp + 10, user.tenant.code, :cxs)
+      |> http_get(
+        status: 403,
+        body: "{\"error\": \"unauthorized\"}",
+        log: "Token expiration out of bounds"
+      )
+
+      headers_for_api(conn, "cas1:#{cxsid}", -1 * 60, user.tenant.code, :cxs)
+      |> http_get(status: 403, body: "{\"error\": \"unauthorized\"}", log: "Token Expired")
+    end
+
+    test "create_val_token", %{user: user} do
+      token =
+        AuthX.Token.Requests.create(
+          sub: "cas1:d1649fb3-372b-4791-88fa-c73e2f6e5fdd",
+          type: :val,
+          tenant: user.tenant
+        )
+
+      assert token.claims[:aud] == "caa1:val:" <> user.tenant.code
+      assert token.claims[:exp] > Timex.now() |> Timex.shift(hours: 1) |> Timex.to_unix()
+      assert token.claims[:exp] <= Timex.now() |> Timex.shift(days: 30) |> Timex.to_unix()
+    end
+  end
+end

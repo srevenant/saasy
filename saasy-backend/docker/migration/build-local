@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# for running locally
+if [ "$1" != "" ]; then
+	export BUILD="$1"
+fi
+
+if [ -z "$BUILD" ]; then
+  export BUILD=$(date +%Y%m%d.%H%M%S)
+fi
+
+./docker/base/build || exit 1
+echo "--- docker/migration/build-local" || exit 1
+docker build --build-arg BUILD_VERSION=$BUILD \
+	-f docker/migration/Dockerfile -t saasy-migration:$BUILD . || exit 1
+docker tag saasy-migration:$BUILD saasy-migration:latest || exit 1

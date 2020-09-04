@@ -1,0 +1,5 @@
+#!/bin/bash
+
+dir=$(dirname $0)
+$dir/build
+docker-compose -p saasy-backend-release-dev -f $dir/docker-compose.yml up

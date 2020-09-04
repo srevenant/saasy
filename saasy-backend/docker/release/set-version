@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+export BUILD_VERSION=$1
+sed -i -e 's/^\(\s*\)set version: "[0-9].*$/\1set version: "'$BUILD_VERSION'"/' rel/config.exs
+sed -i -e 's/^\(\s*\)config :web, release_version: .*$/config :web, release_version: "'$BUILD_VERSION'"/' config/config.exs
+sed -i -e 's/{{build.version}}/'"$BUILD_VERSION"'/' apps/web/lib/web_svc/templates/layout/app.html.eex

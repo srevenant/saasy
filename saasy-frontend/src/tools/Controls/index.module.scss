@@ -1,0 +1,36 @@
+.controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  width: calc(100% - 3rem);
+  align-items: center;
+  &.reverse {
+    flex-direction: row-reverse;
+  }
+}
+.control {
+  &.header {
+    color: gray;
+    margin-left: 0.5rem;
+    border-radius: 0.5rem;
+  }
+  &.inline {
+    color: white;
+    border-radius: 1.75rem;
+  }
+  height: 1.75rem;
+  width: 1.75rem;
+  &:hover {
+    background-color: gray;
+    color: white;
+  }
+  position: relative;
+  .content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+  }
+}

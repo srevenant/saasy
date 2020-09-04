@@ -1,0 +1,61 @@
+const path = require('path');
+const glob = require('glob');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const postcssPresetEnv = require("postcss-preset-env");
+
+module.exports = (env, options) => ({
+  optimization: {
+    minimizer: [
+      new UglifyJsPlugin({ cache: true, parallel: true, sourceMap: false }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
+  },
+  entry: {
+      '../js/app.js': ['./js/app.js'].concat(glob.sync('./vendor/**/*.js')),
+  },
+  output: {
+    filename: '[name]',
+    path: path.resolve(__dirname, '../priv/static/js'),
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader'
+        }
+      },
+      {
+        test:/\.(s*)css$/,
+        use:[
+          {loader: MiniCssExtractPlugin.loader},
+          {loader: "css-loader",
+           options: {
+             importLoaders: 2
+           }},
+          {
+            loader: "postcss-loader",
+            options: {
+              ident: "postcss",
+              plugins: [
+                postcssPresetEnv({
+                  browsers: [">1%"]
+                }),
+          //      require("cssnano")()
+              ]
+            }
+          },
+          {loader: 'sass-loader'}
+        ]
+      }
+    ]
+  },
+  plugins: [
+    new MiniCssExtractPlugin({filename: "../css/app.css"}),
+    new CopyWebpackPlugin([{ from: 'static/', to: '../' }])
+  ]
+});

@@ -1,0 +1,40 @@
+# this is all wrapped by `./run-tests`
+version: '3.3'
+services:
+  phx:
+    image: phx:test-ci
+    build:
+      context: ../..
+      dockerfile: docker/test-ci/Dockerfile
+      args:
+        - BUILD_ENV=test-ci
+        - MIX_ENV=test
+        - SEED_DB=true
+    environment:
+      - MIX_ENV=test
+      - TEST_TENANT=bluesun
+      - REFLEX_APIKEY=${REFLEX_APIKEY}
+      - REFLEX_URL=${REFLEX_URL}
+      - REFLEX_CONFIG=leo-bus-o1
+#    volumes:
+#      - shared:/shared
+    ports:
+      - "4010:4010"
+    depends_on:
+      - db
+    # this is all wrapped by `./run-tests`
+    command:
+      - /docker/run-tests-inside
+
+  db:
+    image: mariadb
+    volumes:
+#      - mydata:/var/lib/mysql
+#      - shared:/shared
+      - ../../data:/data
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+
+#volumes:
+#  mydata:
+#  shared:

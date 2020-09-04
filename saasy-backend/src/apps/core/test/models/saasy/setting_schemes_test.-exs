@@ -1,0 +1,49 @@
+defmodule Core.SettingSchemeTest do
+  use Core.Case, async: true
+  alias Core.Model.SettingSchemes
+  alias Core.Model.SettingScheme
+
+  # TODO: SettingSchemeScheme
+  doctest Core.Model.SettingSchemes
+  doctest Core.Model.SettingScheme
+
+  test "factory" do
+    assert %SettingScheme{} = scheme = insert(:setting_scheme)
+    assert scheme.id != nil
+  end
+
+  describe "one/1" do
+    test "receive scheme" do
+      c = insert(:setting_scheme)
+      assert %SettingScheme{} = found = SettingSchemes.one!(id: c.id)
+      assert found.id == c.id
+    end
+  end
+
+  describe "create/1" do
+    test "inserts a valid record" do
+      attrs = params_for(:setting_scheme)
+      assert {:ok, scheme} = SettingSchemes.create(attrs)
+      assert scheme.id != nil
+    end
+
+    test "does not allow duplicate record" do
+      attrs = params_for(:setting_scheme)
+      assert {:ok, scheme} = SettingSchemes.create(attrs)
+      assert {:error, changeset} = SettingSchemes.create(attrs)
+      assert {"has already been taken", _} = Keyword.get(changeset.errors, :name)
+    end
+  end
+
+  # other ideas:
+  # - changing name of scheme (ok)
+  # - changing tenant (not ok)
+
+  describe "delete/1" do
+    test "deletes record" do
+      scheme = insert(:setting_scheme)
+      assert {:ok, deleted} = SettingSchemes.delete(scheme)
+      assert deleted.id == scheme.id
+    end
+  end
+end

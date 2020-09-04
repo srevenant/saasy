@@ -1,0 +1,87 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(2px);
+}
+.scroll {
+  height: calc(100vh - 10rem) !important;
+  max-height: calc(100vh - 10rem);
+}
+.modal {
+  .frame {
+    position: absolute;
+    top: 2rem;
+    left: 0;
+    right: 0;
+    &.fw-50 {
+      @media screen and (min-width: 30em) {
+        top: 4rem;
+        left: 15%;
+        right: 15%;
+      }
+      @media screen and (min-width: 60em) {
+        top: 6rem;
+        left: 25%;
+        right: 25%;
+      }
+      @media screen and (orientation: landscape) and (min-width: 30em) {
+        top: 2rem;
+      }
+      @media screen and (orientation: portrait) and (min-width: 60em) {
+        top: 2rem;
+      }
+    }
+    &.fw-75 {
+      @media screen and (min-width: 30em) {
+        left: 5%;
+        right: 5%;
+      }
+      @media screen and (min-width: 60em) {
+        left: 12%;
+        right: 12%;
+      }
+    }
+    &.fw-95 {
+      @media screen and (min-width: 30em) {
+        left: 1rem;
+        right: 1rem;
+      }
+      @media screen and (min-width: 60em) {
+        left: 2rem;
+        right: 2rem;
+      }
+    }
+    // box-shadow: 5px 5px 15px var(--t-gray);
+    // border: solid 2px var(--t-solidbg-dark);
+    // background-color: var(--t-gray);
+    // backdrop-filter: blur(10px);
+    // color: var(--t-primary);
+    .body {
+      // padding-left: 0.5rem;
+      padding: 0;
+    }
+    .close {
+      cursor: pointer;
+      border: solid 2px var(--t-solidbg-dark);
+      position: absolute;
+      background-color: var(--t-primary);
+      height: calc(1.25rem - 1px);
+      width: calc(1.25rem - 1px);
+      top: -0.7rem;
+      right: 0;
+      z-index: +1;
+      @media screen and (min-width: 30em) {
+        right: -0.7rem;
+      }
+
+      color: white;
+      &:hover {
+        background-color: var(--t-primary-hilite);
+      }
+    }
+  }
+}

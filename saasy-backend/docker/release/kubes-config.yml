@@ -1,0 +1,134 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: apz
+  name: {{ setenv.APP_SERVICE }}-service
+  labels:
+    app: {{ setenv.APP_PIPELINE }}
+    role: phx
+    client: {{ tenant }}
+    lane: {{ lane }}
+  annotations:
+
+spec:
+  ports:
+  - name: headless
+    port: 4010
+    targetPort: 4010
+  selector:
+    app: {{ setenv.APP_PIPELINE }}
+    role: phx
+    client: {{ tenant }}
+    lane: {{ lane }}
+status:
+  loadBalancer: {}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: apz
+  name: {{ setenv.APP_SERVICE }}
+  labels:
+    app: {{ setenv.APP_PIPELINE }}
+    role: phx
+    client: {{ tenant }}
+    lane: {{ lane }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: "{{ sensitive.kubernetes.ingress-hostname }}"
+    http:
+      paths:
+      - path: /em/
+        backend:
+          serviceName: {{ setenv.APP_SERVICE }}-service
+          servicePort: 4010
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: apz
+  name: {{ setenv.APP_SERVICE }}
+  labels:
+    app: {{ setenv.APP_PIPELINE }}
+    role: phx
+    client: {{ tenant }}
+    lane: {{ lane }}
+
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ setenv.APP_PIPELINE }}
+        role: phx
+        client: {{ tenant }}
+        lane: {{ lane }}
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: lifecycle
+                operator: In
+                values:
+                - "Ec2Spot"
+      containers:
+      - env:
+        - name: PYTHONUNBUFFERED
+          value: "true"
+        - name: REFLEX_SERVICE
+          value: {{ setenv.APP_SERVICE }}
+        - name: REFLEX_URL
+          valueFrom:
+            secretKeyRef:
+              name: reflex-url
+              key: REFLEX_URL
+        - name: REFLEX_APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ sensitive.kubernetes.apikey-secret }}
+              key: REFLEX_APIKEY
+        image: saasy-backend:{{ build.version }}
+        name: {{ setenv.APP_SERVICE }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100M
+        ports:
+        - containerPort: 4010
+        readinessProbe: # can I receive traffic?
+          httpGet:
+            path: /em/v1/health
+            port: 4010
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+          initialDelaySeconds: 1
+          periodSeconds: 30
+          failureThreshold: 1 # stop sending traffic asap
+          timeoutSeconds: 5
+        livenessProbe: # should I be reaped?  -- data migrations...
+          httpGet:
+            path: /em/v1/health
+            port: 4010
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+          initialDelaySeconds: 15
+          failureThreshold: 10 # let it go for 5 minutes
+          periodSeconds: 30
+          timeoutSeconds: 10
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: regcred
+status: {}

@@ -1,0 +1,4 @@
+defmodule Core.Model.Settings do
+  use Core.Context
+  use Core.Model.CollectionUuid, model: Setting
+end

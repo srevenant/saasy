@@ -1,0 +1,50 @@
+defmodule Core.Model.SettingScheme do
+  @moduledoc """
+  Schema for representing and working with a SettingScheme.
+  """
+  use Ecto.Schema
+  @timestamps_opts [type: :utc_datetime]
+  import Ecto.Changeset
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+  schema "saasy_setting_schemes" do
+    field(:scope, :string)
+    field(:name, :string)
+    field(:scheme, :map)
+    field(:help, :string)
+    timestamps()
+  end
+
+  @required_fields [:scope, :name, :scheme, :help]
+
+  @update_allowed_fields [:name, :scheme, :help]
+
+  @create_allowed_fields @required_fields ++ @update_allowed_fields
+
+  def validate(changeset) do
+    changeset
+    |> validate_required(@required_fields)
+    |> unique_constraint(:name, name: :scheme_name)
+  end
+
+  @doc """
+  Build a changeset for creating.
+  """
+  def build(params \\ %{}) do
+    %__MODULE__{}
+    |> cast(params, @create_allowed_fields)
+    |> validate
+  end
+
+  @doc """
+  Changeset for performing updates.
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, @update_allowed_fields)
+    |> validate
+  end
+
+  use Core.Model.CollectionModel
+end

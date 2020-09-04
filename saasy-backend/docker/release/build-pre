@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# called by the jenkins job
+
+dir=$(dirname $0)
+docker-build --repos=prd --login
+$dir/../base/build || exit 1

@@ -1,0 +1,41 @@
+.main {
+  margin-top: 4rem;
+  flex: 1 0 auto;
+}
+.footer {
+  flex-shrink: 0;
+  border: none;
+  border-top: solid 1px;
+}
+.navbarTheme,
+.navbar {
+  background-color: white;
+}
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 4rem;
+}
+.navlink {
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  color: var(--hu-bg-light-text);
+  outline: none;
+  font-weight: bold;
+  box-shadow: none;
+  &:visited {
+    color: var(--hu-bg-light-text);
+  }
+  &.active {
+    color: var(--hu-primary);
+    font-weight: 700;
+  }
+  &:hover {
+    color: var(--tc-dark-blue);
+  }
+}

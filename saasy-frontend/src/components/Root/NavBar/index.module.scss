@@ -1,0 +1,16 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.navlink {
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  outline: none;
+  font-weight: normal;
+  background-color: transparent;
+  font-weight: 700;
+}

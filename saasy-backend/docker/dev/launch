@@ -1,0 +1,26 @@
+#!/bin/bash
+
+deps_count=$(ls -1 deps/ | wc -l)
+build_count=$(ls -1 _build/ | wc -l)
+if [[ mix.exs -nt mix.lock || $deps_count -eq 0 || $build_count -eq 0 ]]; then
+  echo "===> Detected need for recompile..."
+	rm -rf /root/.cache
+	mix deps.get || exit 1
+	mix deps.compile || exit 1
+fi
+
+#if [ -d assets/node_modules ]; then
+#    echo ""
+#    echo "===> Not rebuilding assets -- if desired: rm -rf src/assets/node_modules"
+#    echo ""
+#else
+#    echo "===> Rebuilding assets"
+#    (cd assets; npm install)
+#fi
+
+echo "===> starting phoenix in dev mode..."
+mix deps.get && mix deps.compile
+mix ecto.create
+
+echo "===> starting phoenix in dev mode..."
+exec mix phx.server

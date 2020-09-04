@@ -1,0 +1,8 @@
+#!/bin/bash
+
+base=$1
+if [ "$base" = "" ]; then
+  base="./src"
+fi
+
+yarn format $base

@@ -1,0 +1,47 @@
+defmodule Core.Model.DupTemplate do
+  @moduledoc """
+  Schema for representing and working with a DupTemplate.
+  """
+  use Ecto.Schema
+  import Ecto.Changeset
+  use Core.ContextClient
+
+  @timestamps_opts [type: :utc_datetime]
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+
+  schema "dup_templates" do
+    belongs_to(:user, User, type: :binary_id, foreign_key: :user_id)
+    #field(:type, Enum)
+    timestamps()
+  end
+
+  @required_fields [:x]
+  @update_allowed_fields [:x]
+  @create_allowed_fields @required_fields ++ @update_allowed_fields
+
+  def validate(chgset) do
+    chgset
+    |> validate_required(@required_fields)
+  end
+
+  @doc """
+  Build a changeset for creating a new DupTemplate.
+  """
+  def build(params \\ %{}) do
+    %__MODULE__{}
+    |> cast(params, @create_allowed_fields)
+    |> validate
+  end
+
+  @doc """
+  Changeset for performing updates to a DupTemplate.
+  """
+  def changeset(item, attrs) do
+    item
+    |> cast(attrs, @update_allowed_fields)
+    |> validate
+  end
+
+  use Core.Model.CollectionModel
+end
