@@ -1,29 +1,30 @@
-# Perform Backend
+# SaaSy Backend
 
-/Copyright 2019, Protos, LLC/
+_Copyright 2019, Protos, LLC_
 
-This is the backend for Perform.  It is elixir (optionally) wrapped in docker.
+This is the backend for Saasy.  It is elixir (optionally) wrapped in docker.
 
 Details on using the app are defined in [src/README.md](src/README.md).
 
 # Adding DB Elements
 Quick reference
 
-1. create a /db migration/ (Database DDL like): `apps/core/priv/repo/migrations/{date}_{name}`
-2. create a /db schema model/ (mapping DDL to App) - use singular form of table: `apps/core/lib/core/model/{name}.ex, and {name}s.ex`
-2. create a /db schema collection/ (less changeset more logical changes) - use plural form of table: `apps/core/lib/core/model/{name}s.ex`
-3. add to /client context/ (helps make it visible): `apps/core/lib/core/context_client.ex`
+1. create a _db migration_ (Database DDL like): `apps/core/priv/repo/migrations/{date}_{name}`
+2. create a _db schema model_ (mapping DDL to App) - use singular form of table: `apps/core/lib/core/model/{name}.ex, and {name}s.ex`
+2. create a _db schema collection_ (less changeset more logical changes) - use plural form of table: `apps/core/lib/core/model/{name}s.ex`
+3. add to _client context_ (helps make it visible): `apps/core/lib/core/context_client.ex`
 4. create a [factory](https://github.com/thoughtbot/ex_machina) (as needed): `apps/core/test/support/factory.ex`
 5. add to tests: `apps/core/test/{name}_test.exs` - may include both singular and plural schema tests
 
 If using GraphQL also do:
 
-1. add to graphql schema (if desired): `vibes/lib/vibes_web/schema/types.ex`
+1. add to graphql schema (if desired): `src/apps/web/lib/web_svc/schema/types.ex`
 2. add graphql and other front-end tests
 
 ## Folder Structure
 
-* Folder `src/` contains the elixir application.  See more at [src/README.md](src/README.md)
+* Folder `src/` contains the elixir umbrella application.  See more at [src/README.md](src/README.md)
+* Variant: Phoenix is at `src/apps/web/web_svc` rather than `src/apps/web/{appname}_web`
 * Folder `docker/` contains the docker build bits, with support for multiple environments in each sub folder
 * The launch script for dev is `docker/{env}/launch`
 * The `./local` command is a useful wrapper for docker-compose.  It prints out what it is running, so you can adjust to suite your needs.  You can get a full syntax by just running the command `./local`
